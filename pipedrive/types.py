@@ -74,7 +74,7 @@ class PipedriveModelType(BaseType):
         if isinstance(value, dict):
             return dict_to_model(value, self.model_class)
 
-        raise ConversionError(self.messages['value_type'] % self.model_class)            
+        raise ConversionError(self.messages['value_type'] % self.model_class)
 
     def to_primitive(self, value, context=None):
         if isinstance(value, self.model_class):
@@ -84,3 +84,37 @@ class PipedriveModelType(BaseType):
             return value['id']
 
         return value
+
+
+class PipedriveListDictStringOrStringType(BaseType):
+    """
+    Pipedrive inconsistently returns values for some fields, for example: "find" for a Person just returns a string
+    for email even if there are multiple emails associated with that Person. "detail" for a Person returns a list
+    containing a dict containing strings for emails. Because of this inconsistency we need to have a field that can
+    return the correct values even if the way they are represented changes. We are opting for the list-dict-string
+    because this allows us to better control these multiple values (email addresses, phone numbers etc.).
+    """
+    def to_native(self, value, context=None):
+        if isinstance(value, list):
+            return value
+        elif isinstance(value, basestring):
+            return [{'value': value}]
+
+    def to_primitive(self, value, context=None):
+        if isinstance(value, basestring):
+            value = [{'value': value}]
+        return value
+
+
+class PipedriveEmailType(PipedriveListDictStringOrStringType):
+    """
+    We're just using these because the names don't suck as much.
+    """
+    pass
+
+
+class PipedrivePhonenumberType(PipedriveListDictStringOrStringType):
+    """
+    We're just using these because the names don't suck as much.
+    """
+    pass

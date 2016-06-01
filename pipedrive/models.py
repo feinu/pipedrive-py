@@ -5,7 +5,7 @@ from schematics.types import (
 )
 from schematics.types.compound import ListType, ModelType, DictType
 from types import (
-    PipedriveDateTime, PipedriveModelType, PipedriveDate, PipedriveTime
+    PipedriveDateTime, PipedriveModelType, PipedriveDate, PipedriveTime, PipedriveEmailType, PipedrivePhonenumberType
 )
 
 
@@ -125,8 +125,8 @@ class Person(Model):
     name = StringType(required=True)
     owner_id = PipedriveModelType(User, required=False)
     org_id = PipedriveModelType(Organization, required=False)
-    email = ListType(DictType(StringType), required=False)
-    phone = ListType(DictType(StringType), required=False)
+    email = PipedriveEmailType(required=False)
+    phone = PipedrivePhonenumberType(required=False)
     visible_to = IntType(required=False)
     add_time = PipedriveDateTime(required=False)
 
