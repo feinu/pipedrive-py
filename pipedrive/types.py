@@ -1,5 +1,7 @@
 # encoding:utf-8
 import datetime
+
+from collections import Iterable
 from schematics.types import DateType, BaseType
 from schematics.exceptions import ConversionError
 from base import dict_to_model
@@ -101,8 +103,14 @@ class PipedriveListDictStringOrStringType(BaseType):
             return [{'value': value}]
 
     def to_primitive(self, value, context=None):
-        if isinstance(value, basestring):
-            value = [{'value': value}]
+        # Pipedrive can't handle iterable objects (dicts, lists, sets, etc.) so we throw an error if we encounter
+        # one during updating or creation. Fun fact: Pipedrive can return iterable objects, but can't receive them.
+        # So when you, for example, get a person with multiple email addresses and try to update his name Pipedrive
+        # will screw up his email addresses. In that case it's just better to update manually or specify None for
+        # the email addresses (which means it won't update them at all).
+        if not isinstance(value, basestring) and isinstance(value, Iterable):
+            raise ValueError("Pipedrive can't handle iterable objects. You can either specify one value of type base"
+                             "string which will update the first record, or specify None which won't update anything")
         return value
 
 
