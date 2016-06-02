@@ -99,7 +99,7 @@ class PipedriveListDictStringOrStringType(BaseType):
     def to_native(self, value, context=None):
         if isinstance(value, list):
             return value
-        elif isinstance(value, basestring):
+        elif is_string(value):
             return [{'value': value}]
 
     def to_primitive(self, value, context=None):
@@ -108,7 +108,7 @@ class PipedriveListDictStringOrStringType(BaseType):
         # So when you, for example, get a person with multiple email addresses and try to update his name Pipedrive
         # will screw up his email addresses. In that case it's just better to update manually or specify None for
         # the email addresses (which means it won't update them at all).
-        if not isinstance(value, basestring) and isinstance(value, Iterable):
+        if not is_string(value) and isinstance(value, Iterable):
             raise ValueError("Pipedrive can't handle iterable objects. You can either specify one value of type base"
                              "string which will update the first record, or specify None which won't update anything")
         return value
@@ -126,3 +126,13 @@ class PipedrivePhonenumberType(PipedriveListDictStringOrStringType):
     We're just using these because the names don't suck as much.
     """
     pass
+
+
+def is_string(value):
+    """
+    Check if value is a string. Python 2 and 3 compatible.
+    """
+    try:
+        return isinstance(value, basestring)
+    except NameError:
+        return isinstance(value, str)
