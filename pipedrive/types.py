@@ -90,6 +90,9 @@ class PipedriveModelType(BaseType):
 
 class PipedriveListDictStringOrStringType(BaseType):
     """
+    Can be used as a base class for fields that receive different formats (list with dicts with strings or just
+    a string) from the Pipedrive API.
+
     Pipedrive inconsistently returns values for some fields, for example: "find" for a Person just returns a string
     for email even if there are multiple emails associated with that Person. "detail" for a Person returns a list
     containing a dict containing strings for emails. Because of this inconsistency we need to have a field that can
@@ -116,14 +119,20 @@ class PipedriveListDictStringOrStringType(BaseType):
 
 class PipedriveEmailType(PipedriveListDictStringOrStringType):
     """
-    We're just using these because the names don't suck as much.
+    Use this field type for models that can have multiple email addresses associated with them, such as Persons.
+    We're just using these, because they're more clear than the parent's name.
+
+    For more information see the parent's docstring.
     """
     pass
 
 
 class PipedrivePhonenumberType(PipedriveListDictStringOrStringType):
     """
-    We're just using these because the names don't suck as much.
+    Use this field type for models that can have multiple phone numbers associated with them, such as Persons.
+    We're just using these, because they're more clear than the parent's name.
+
+    For more information see the parent's docstring.
     """
     pass
 
