@@ -1,5 +1,7 @@
 # encoding:utf-8
 import datetime
+
+from collections import Iterable
 from schematics.types import DateType, BaseType
 from schematics.exceptions import ConversionError
 from base import dict_to_model
@@ -74,7 +76,7 @@ class PipedriveModelType(BaseType):
         if isinstance(value, dict):
             return dict_to_model(value, self.model_class)
 
-        raise ConversionError(self.messages['value_type'] % self.model_class)            
+        raise ConversionError(self.messages['value_type'] % self.model_class)
 
     def to_primitive(self, value, context=None):
         if isinstance(value, self.model_class):
@@ -84,3 +86,62 @@ class PipedriveModelType(BaseType):
             return value['id']
 
         return value
+
+
+class PipedriveListDictStringOrStringType(BaseType):
+    """
+    Can be used as a base class for fields that receive different formats (list with dicts with strings or just
+    a string) from the Pipedrive API.
+
+    Pipedrive inconsistently returns values for some fields, for example: "find" for a Person just returns a string
+    for email even if there are multiple emails associated with that Person. "detail" for a Person returns a list
+    containing a dict containing strings for emails. Because of this inconsistency we need to have a field that can
+    return the correct values even if the way they are represented changes. We are opting for the list-dict-string
+    because this allows us to better control these multiple values (email addresses, phone numbers etc.).
+    """
+    def to_native(self, value, context=None):
+        if isinstance(value, list):
+            return value
+        elif is_string(value):
+            return [{'value': value}]
+
+    def to_primitive(self, value, context=None):
+        # Pipedrive can't handle iterable objects (dicts, lists, sets, etc.) so we throw an error if we encounter
+        # one during updating or creation. Fun fact: Pipedrive can return iterable objects, but can't receive them.
+        # So when you, for example, get a person with multiple email addresses and try to update his name Pipedrive
+        # will screw up his email addresses. In that case it's just better to update manually or specify None for
+        # the email addresses (which means it won't update them at all).
+        if not is_string(value) and isinstance(value, Iterable):
+            raise ValueError("Pipedrive can't handle iterable objects. You can either specify one value of type base"
+                             "string which will update the first record, or specify None which won't update anything")
+        return value
+
+
+class PipedriveEmailType(PipedriveListDictStringOrStringType):
+    """
+    Use this field type for models that can have multiple email addresses associated with them, such as Persons.
+    We're just using these, because they're more clear than the parent's name.
+
+    For more information see the parent's docstring.
+    """
+    pass
+
+
+class PipedrivePhonenumberType(PipedriveListDictStringOrStringType):
+    """
+    Use this field type for models that can have multiple phone numbers associated with them, such as Persons.
+    We're just using these, because they're more clear than the parent's name.
+
+    For more information see the parent's docstring.
+    """
+    pass
+
+
+def is_string(value):
+    """
+    Check if value is a string. Python 2 and 3 compatible.
+    """
+    try:
+        return isinstance(value, basestring)
+    except NameError:
+        return isinstance(value, str)
