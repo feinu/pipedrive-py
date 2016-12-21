@@ -4,7 +4,7 @@ from schematics.types import (
     StringType, IntType, DecimalType, DateTimeType, EmailType, BooleanType
 )
 from schematics.types.compound import ListType, ModelType
-from types import (
+from .types import (
     PipedriveDateTime, PipedriveModelType, PipedriveDate, PipedriveTime
 )
 

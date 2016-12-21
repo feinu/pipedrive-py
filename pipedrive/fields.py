@@ -3,7 +3,7 @@ import json
 from schematics.types import StringType, IntType
 from schematics.types.compound import ListType, ModelType
 from schematics.models import Model
-from base import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
+from pipedrive import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
 
 
 # Generic classes for fields and their resources

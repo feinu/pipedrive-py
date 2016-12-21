@@ -1,1 +1,1 @@
-from test_api_attributes import *
+from .test_api_attributes import *

@@ -1,6 +1,7 @@
 import unittest
 from unittest import TestCase
-from pipedrive.base import BaseResource, PipedriveAPI
+
+from pipedrive import PipedriveAPI, BaseResource
 
 
 class ResourceAccessorAttibute(TestCase):

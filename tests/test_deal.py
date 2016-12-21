@@ -1,10 +1,8 @@
-from __future__ import absolute_import
+import unittest
 from unittest import TestCase
 from schematics.exceptions import ValidationError
-from pipedrive.base import dict_to_model
-from pipedrive.deal import Deal
-from pipedrive.user import User
-from utils import get_test_data
+from pipedrive import Deal, User, dict_to_model
+from .utils import get_test_data
 
 
 class DealModelTest(TestCase):

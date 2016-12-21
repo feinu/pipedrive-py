@@ -1,6 +1,6 @@
 # encoding:utf-8
-from base import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
-from models import (
+from .base import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
+from pipedrive import (
     User, Pipeline, Stage, SearchResult, Organization,
     Deal, Activity, ActivityType
 )

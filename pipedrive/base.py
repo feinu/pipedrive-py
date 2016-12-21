@@ -6,7 +6,6 @@ from time import sleep
 import requests
 from schematics.models import Model
 from schematics.types import BooleanType, IntType
-from schematics.types.compound import ModelType
 
 
 logger = getLogger('pipedrive.api')
