@@ -212,4 +212,4 @@ def dict_to_model(data, model_class):
         for field_name in fields])
     safe_keys = set(data.keys()).intersection(model_keys)
     safe_data = {key: data[key] for key in safe_keys}
-    return model_class(raw_data=safe_data)
+    return model_class(raw_data=safe_data, original_data=data)

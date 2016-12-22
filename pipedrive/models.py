@@ -1,4 +1,6 @@
 # encoding:utf-8
+from copy import deepcopy
+
 from schematics.models import Model
 from schematics.types import (
     StringType, IntType, DecimalType, DateTimeType, EmailType, BooleanType
@@ -9,7 +11,18 @@ from .types import (
 )
 
 
-class User(Model):
+class BaseModel(Model):
+    _original_data = None
+
+    def __init__(self, raw_data=None, deserialize_mapping=None, strict=True, original_data=None):
+        self._original_data = original_data
+        super().__init__(raw_data, deserialize_mapping, strict)
+
+    def get_original_data(self):
+        return deepcopy(self._original_data)
+
+
+class User(BaseModel):
     """
     A person in the Pipedrive ecosystem. Can be used to represent the owner of
     an activity or deal, among other things.
@@ -24,7 +37,7 @@ class User(Model):
         return self.name or str(self.id)
 
 
-class Pipeline(Model):
+class Pipeline(BaseModel):
     """
     Represents one of the pipelines in the Pipedrive ecosystem.
     """
@@ -34,7 +47,7 @@ class Pipeline(Model):
     active = IntType(required=False, choices=(0,1))
 
 
-class Stage(Model):
+class Stage(BaseModel):
     """
     Represents a stage in a pipeline. E.g.: open deals, lost deals, etc.
     """
@@ -47,7 +60,7 @@ class Stage(Model):
     order_nr = IntType(required=False, min_value=0)
 
 
-class SearchResult(Model):
+class SearchResult(BaseModel):
     """
     Model for the results from search queries. Goes for both broad search and
     specific fields search, even though the response schema for those API
@@ -60,7 +73,7 @@ class SearchResult(Model):
     result = StringType(required=False)
 
 
-class Organization(Model):
+class Organization(BaseModel):
     """
     Represents an organization (or Company, as it's called in the Loggi system).
     """
@@ -71,7 +84,7 @@ class Organization(Model):
     address = StringType(required=False)
 
 
-class Deal(Model):
+class Deal(BaseModel):
     """
     The model for the Pipedrive deals.
     """
@@ -89,7 +102,7 @@ class Deal(Model):
     visible_to = ListType(IntType)
 
 
-class Activity(Model):
+class Activity(BaseModel):
     """
     Model for the activities associated to each deal.
     """
@@ -107,7 +120,7 @@ class Activity(Model):
 
 
 
-class ActivityType(Model):
+class ActivityType(BaseModel):
     """
     Represents the possible types of activities.
     """
