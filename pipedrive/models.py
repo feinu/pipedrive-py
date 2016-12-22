@@ -102,6 +102,20 @@ class Deal(BaseModel):
     visible_to = ListType(IntType)
 
 
+class Note(BaseModel):
+    """
+    Represents the notes of a Deal.
+    """
+    content = StringType(required=True)
+    deal_id = IntType(required=False)
+    person_id = IntType(required=False)
+    org_id = IntType(required=False)
+
+    pinned_to_deal_flag = BooleanType(required=False)
+    pinned_to_person_flag = BooleanType(required=False)
+    pinned_to_organization_flag = BooleanType(required=False)
+
+
 class Activity(BaseModel):
     """
     Model for the activities associated to each deal.

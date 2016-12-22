@@ -2,8 +2,7 @@
 from .base import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
 from pipedrive import (
     User, Pipeline, Stage, SearchResult, Organization,
-    Deal, Activity, ActivityType
-)
+    Deal, Activity, ActivityType, Note)
 
 class UserResource(BaseResource):
     MODEL_CLASS = User
@@ -183,6 +182,28 @@ class DealResource(BaseResource):
         response = self._delete(deal.id)
         return response.json()
 
+class NoteResource(BaseResource):
+    MODEL_CLASS = Note
+    API_ACESSOR_NAME = 'note'
+    LIST_REQ_PATH = '/notes'
+    DETAIL_REQ_PATH = '/notes/{id}'
+
+    def detail(self, resource_ids):
+        response = self._detail(resource_ids)
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
+    def create(self, activityType):
+        response = self._create(data=activityType.to_primitive())
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
+    def list(self, **params):
+        return CollectionResponse(self._list(params=params), self.MODEL_CLASS)
+
+    def delete(self, activityType):
+        response = self._delete(activityType.id)
+        return response.json()
+
+
 
 class ActivityResource(BaseResource):
     MODEL_CLASS = Activity
@@ -247,6 +268,7 @@ for resource_class in [
     SearchResource,
     OrganizationResource,
     DealResource,
+    NoteResource,
     ActivityResource,
     ActivityTypeResource,
 ]:
