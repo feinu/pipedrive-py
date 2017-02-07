@@ -4,6 +4,7 @@ from schematics.types import StringType, IntType
 from schematics.types.compound import ListType, ModelType
 from schematics.models import Model
 from pipedrive import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
+from .models import BaseModel
 
 
 # Generic classes for fields and their resources
@@ -12,7 +13,7 @@ class FieldOption(Model):
     label = StringType(required=True)
 
 
-class FieldModel(Model):
+class FieldModel(BaseModel):
     id = IntType(required=False)
     key = StringType(required=False)
     name = StringType(required=True)
@@ -64,6 +65,14 @@ class ProductField(FieldModel):
     FIELD_PARENT_TYPE = 'productField'
 
 
+class ActivityField(FieldModel):
+    FIELD_PARENT_TYPE = 'activityField'
+
+
+class NoteField(FieldModel):
+    FIELD_PARENT_TYPE = 'noteField'
+
+
 class DealFieldResource(FieldResource):
     FIELD_CLASS = DealField
     API_ACESSOR_NAME = 'dealField'
@@ -92,7 +101,23 @@ class ProductFieldResource(FieldResource):
     DETAIL_REQ_PATH = '/productFields/{id}'
 
 
+class ActivityFieldResource(FieldResource):
+    FIELD_CLASS = ActivityField
+    API_ACESSOR_NAME = 'activityField'
+    LIST_REQ_PATH = '/activityFields'
+    DETAIL_REQ_PATH = '/activityFields/{id}'
+
+
+class NoteFieldResource(FieldResource):
+    FIELD_CLASS = NoteField
+    API_ACESSOR_NAME = 'noteField'
+    LIST_REQ_PATH = '/noteFields'
+    DETAIL_REQ_PATH = '/noteFields/{id}'
+
+
 PipedriveAPI.register_resource(DealFieldResource)
 PipedriveAPI.register_resource(OrganizationFieldResource)
 PipedriveAPI.register_resource(PersonFieldResource)
 PipedriveAPI.register_resource(ProductFieldResource)
+PipedriveAPI.register_resource(ActivityFieldResource)
+PipedriveAPI.register_resource(NoteFieldResource)
