@@ -1,12 +1,17 @@
 # encoding:utf-8
 import datetime
-from schematics.types import DateType, BaseType
+from schematics.types import DateType, BaseType, StringType
 from schematics.exceptions import ConversionError
 from pipedrive import dict_to_model
+import json
+
 
 class PipedriveDate(DateType):
     def to_native(self, value, context=None):
-        return datetime.datetime.strptime(value, "%Y-%m-%d")
+        try:
+            return datetime.datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return None
 
 
 class PipedriveTime(DateType):
@@ -25,6 +30,19 @@ class PipedriveTime(DateType):
 class PipedriveDateTime(DateType):
     def to_native(self, value, context=None):
         return datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+
+
+class PipedrivePhoneEmailType(StringType):
+    def to_native(self, value, context=None):
+        return '[{"label":"","value":"%s","primary": true}]' % value
+
+    def to_primitive(self, value, context=None):
+        return value
+        try:
+            return [entry['value'] for entry in json.loads(value)]
+        except json.JSONDecodeError as e:
+            print('Bad JSON: "%s"' % value)
+            raise e
 
 
 class PipedriveModelType(BaseType):
@@ -73,7 +91,7 @@ class PipedriveModelType(BaseType):
         if isinstance(value, dict):
             return dict_to_model(value, self.model_class)
 
-        raise ConversionError(self.messages['value_type'] % self.model_class)            
+        raise ConversionError(self.messages['value_type'] % self.model_class)
 
     def to_primitive(self, value, context=None):
         if isinstance(value, self.model_class):
