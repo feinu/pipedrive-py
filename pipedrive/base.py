@@ -2,6 +2,7 @@
 from copy import deepcopy
 from logging import getLogger
 from time import sleep
+from functools import reduce
 
 import requests
 from schematics.models import Model
@@ -20,6 +21,7 @@ class PipedriveAPI(object):
         self.api_token = api_token
         self.max_retries = max_retries
         self.retry_backoff_base = retry_backoff_base
+        self.session = requests.Session()
 
     def __getattr__(self, item):
         try:
@@ -30,12 +32,13 @@ class PipedriveAPI(object):
     def send_request(self, method, path, params=None, data=None, attempt=0):
 
         def handle_request_exception(err, log_message):
-            if attempt >= self.max_retries:
+            if (attempt >= self.max_retries) or \
+                    (err.response.status_code in range(400, 500)):
+                # Max retries or something that shouldn't be retried
                 logger.exception(log_message)
                 raise err
             sleep(self.retry_backoff_base ** attempt)
             return self.send_request(method, path, params, data, attempt + 1)
-
 
         if self.api_token in (None, ''):
             class MockResponse(requests.Response):
@@ -48,7 +51,8 @@ class PipedriveAPI(object):
         params['api_token'] = self.api_token
         url = BASE_URL + path
         try:
-            response = requests.request(method, url, params=params, data=data)
+            response = self.session.request(method, url,
+                                            params=params, data=data)
             resp_json = response.json()
             if not resp_json.get('success', False):
                 request = {
@@ -65,12 +69,14 @@ class PipedriveAPI(object):
                 )
             return response
         except ValueError as err:
-            return handle_request_exception(err,
-                "Request with non-JSON response: %s" % err.message)
-                
+            return handle_request_exception(
+                err,
+                "Request with non-JSON response: %s" % err.message
+            )
+
         except Exception as err:
             return handle_request_exception(err,
-                "Request failed: %s" % err.message)
+                                            "Request failed: %s" % err.message)
 
     @staticmethod
     def register_resource(resource_class):
@@ -87,7 +93,9 @@ class PipedriveException(Exception):
         self.response = response
 
     def __str__(self):
-        return self.message
+        return 'Error:\n%s\nRequest:\n%s\nResponse:\n%s' % (
+            self.message, self.request, self.response
+        )
 
 
 class BaseResource(object):
@@ -127,10 +135,14 @@ class BaseResource(object):
         return self.send_request('DELETE', url, params, data)
 
     def _bulk_delete(self, resource_ids, params=None):
-        resource_ids_formatted = reduce(lambda a, b: a + "," + b,\
-            [str(resource_id) for resource_id in resource_ids])
-        return self.send_request('DELETE', self.LIST_REQ_PATH, params,
-            {'ids': resource_ids_formatted})
+        resource_ids_formatted = reduce(
+            lambda a, b: a + "," + b,
+            [str(resource_id) for resource_id in resource_ids]
+        )
+        return self.send_request(
+            'DELETE', self.LIST_REQ_PATH, params,
+            {'ids': resource_ids_formatted}
+        )
 
     def _update(self, resource_ids, params=None, data=None):
         url = self.DETAIL_REQ_PATH.format(id=resource_ids)
@@ -146,9 +158,9 @@ class BaseResource(object):
         return self.send_request('GET', self.FIND_REQ_PATH, params, data)
 
     def _related_entities(self, resource_ids, entity_name, entity_class,
-            params=None, data=None):
+                          params=None, data=None):
         entity_path = self.RELATED_ENTITIES_PATH.format(id=resource_ids,
-            entity=entity_name)
+                                                        entity=entity_name)
         response = self.send_request('GET', entity_path, params, data)
         return CollectionResponse(response, entity_class)
 
@@ -169,7 +181,7 @@ class CollectionResponse(Model):
         self.items = [dict_to_model(item, model_class) for item in items]
         self.success = response.get('success', False)
         if 'additional_data' in response and\
-            'pagination' in response['additional_data']:
+                'pagination' in response['additional_data']:
             pagination = response['additional_data']['pagination']
             self.start = pagination.get('start', 0)
             self.limit = pagination.get('limit', 100)
@@ -208,8 +220,8 @@ def dict_to_model(data, model_class):
         return None
     data = deepcopy(data)
     fields = model_class.fields
-    model_keys = set([fields[field_name].serialized_name or field_name\
-        for field_name in fields])
+    model_keys = set([fields[field_name].serialized_name or field_name
+                      for field_name in fields])
     safe_keys = set(data.keys()).intersection(model_keys)
-    safe_data = {key: data[key] for key in safe_keys}
+    safe_data = {key: data[key] for key in safe_keys if data[key] != ''}
     return model_class(raw_data=safe_data, original_data=data)
