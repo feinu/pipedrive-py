@@ -3,18 +3,20 @@ from copy import deepcopy
 
 from schematics.models import Model
 from schematics.types import (
-    StringType, IntType, DecimalType, DateTimeType, EmailType, BooleanType
+    StringType, IntType, DecimalType, EmailType, BooleanType
 )
-from schematics.types.compound import ListType, ModelType
+from schematics.types.compound import ListType
 from .types import (
-    PipedriveDateTime, PipedriveModelType, PipedriveDate, PipedriveTime
+    PipedriveDateTime, PipedriveModelType, PipedriveDate, PipedriveTime,
+    PipedrivePhoneEmailType
 )
 
 
 class BaseModel(Model):
     _original_data = None
 
-    def __init__(self, raw_data=None, deserialize_mapping=None, strict=True, original_data=None):
+    def __init__(self, raw_data=None, deserialize_mapping=None,
+                 strict=True, original_data=None):
         self._original_data = original_data
         super().__init__(raw_data, deserialize_mapping, strict)
 
@@ -30,7 +32,7 @@ class User(BaseModel):
     id = IntType(required=True)
     name = StringType()
     email = EmailType()
-    active_flag = IntType(choices=(0,1), default=0)
+    active_flag = IntType(choices=(0, 1), default=0)
     has_pic = BooleanType()
 
     def __unicode__(self):
@@ -44,7 +46,7 @@ class Pipeline(BaseModel):
     id = IntType(required=False)
     name = StringType(required=False)
     order_nr = IntType(required=False, min_value=0)
-    active = IntType(required=False, choices=(0,1))
+    active = IntType(required=False, choices=(0, 1))
 
 
 class Stage(BaseModel):
@@ -55,7 +57,7 @@ class Stage(BaseModel):
     name = StringType(required=True)
     pipeline_id = PipedriveModelType(Pipeline, required=True)
     deal_probability = DecimalType(required=False)
-    rotten_flag = IntType(required=False, choices=(0,1))
+    rotten_flag = IntType(required=False, choices=(0, 1))
     rotten_days = IntType(required=False)
     order_nr = IntType(required=False, min_value=0)
 
@@ -80,8 +82,12 @@ class Organization(BaseModel):
     id = IntType(required=False)
     name = StringType(required=False)
     owner_id = PipedriveModelType(User, required=False)
-    visible_to = IntType(required=False, choices=(0,1,2,3))
+    visible_to = IntType(required=False, choices=(0, 1, 2, 3))
     address = StringType(required=False)
+    # Custom field: Story
+    a76bd6ffcbc917963e9dd574f2bd38ee60c789e3 = StringType(required=False)
+    # Custom field: GPS
+    dd8afc37464f6a47a183317e3a7e31727c134858 = StringType(required=False)
 
 
 class Deal(BaseModel):
@@ -96,8 +102,9 @@ class Deal(BaseModel):
     # person_id = PipedriveModelType(Person, required=False)
     org_id = PipedriveModelType(Organization, required=False)
     stage_id = PipedriveModelType(Stage, required=False)
-    status = StringType(required=False, choices=('open','won','lost','deleted'))
-    lost_reson = StringType(required=False)
+    status = StringType(required=False,
+                        choices=('open', 'won', 'lost', 'deleted'))
+    lost_reason = StringType(required=False)
     add_time = PipedriveDateTime(required=False)
     visible_to = ListType(IntType)
 
@@ -131,7 +138,7 @@ class Activity(BaseModel):
     org_id = PipedriveModelType(Organization, required=False)
     note = StringType(required=False)
     due_date = PipedriveDate(required=False)
-
+    due_time = PipedriveTime(required=False)
 
 
 class ActivityType(BaseModel):
@@ -143,3 +150,13 @@ class ActivityType(BaseModel):
     key_string = StringType(required=False)
     icon_key = StringType(required=False)
     is_custom_flag = BooleanType(required=False)
+
+
+class Person(BaseModel):
+    id = IntType(required=False)
+    name = StringType(required=False)
+    owner_id = PipedriveModelType(User, required=False)
+    org_id = PipedriveModelType(Organization, required=False)
+    phone = PipedrivePhoneEmailType(required=False)
+    email = PipedrivePhoneEmailType(required=False)
+    visible_to = IntType(required=False, choices=(0, 1, 2, 3))
