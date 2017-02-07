@@ -4,3 +4,6 @@ dist
 /pipedrive_py.egg-info/
 /runme.py
 .idea
+.*.sw?
+.ropeproject
+venv
