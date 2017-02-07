@@ -2,7 +2,8 @@
 from .base import BaseResource, PipedriveAPI, CollectionResponse, dict_to_model
 from pipedrive import (
     User, Pipeline, Stage, SearchResult, Organization,
-    Deal, Activity, ActivityType, Note)
+    Deal, Activity, ActivityType, Note, Person)
+
 
 class UserResource(BaseResource):
     MODEL_CLASS = User
@@ -23,8 +24,10 @@ class UserResource(BaseResource):
         return CollectionResponse(self._list(params=params), self.MODEL_CLASS)
 
     def find(self, term, **params):
-        return CollectionResponse(self._find(term, params=params),\
-            self.MODEL_CLASS)
+        return CollectionResponse(
+            self._find(term, params=params),
+            self.MODEL_CLASS
+        )
 
     def all(self):
         users = []
@@ -96,7 +99,7 @@ class SearchResource(BaseResource):
 
     def search_single_field(self, term, field, **params):
         """Search for 'term' in a specific field of a specific type of object.
-           'field' must be a DealField, OrganizationField, PersonField or 
+           'field' must be a DealField, OrganizationField, PersonField or
            ProductField (all from pipedrive.fields)"""
         params.update({
             'term': term,
@@ -131,24 +134,37 @@ class OrganizationResource(BaseResource):
         return dict_to_model(response.json()['data'], self.MODEL_CLASS)
 
     def update(self, organization):
-        response = self._update(organization.id,\
-            data=organization.to_primitive())
+        response = self._update(
+            organization.id,
+            data=organization.to_primitive()
+        )
         return dict_to_model(response.json()['data'], self.MODEL_CLASS)
 
     def list(self, **params):
         return CollectionResponse(self._list(params=params), self.MODEL_CLASS)
 
     def find(self, term, **params):
-        return CollectionResponse(self._find(term, params=params),\
-            self.MODEL_CLASS)
+        return CollectionResponse(
+            self._find(term, params=params),
+            self.MODEL_CLASS
+        )
 
     def list_activities(self, resource_ids, **params):
-        return self._related_entities(resource_ids, 'activities', Activity,\
-            params=params)
+        return self._related_entities(
+            resource_ids, 'activities', Activity,
+            params=params
+        )
 
     def list_deals(self, resource_ids, **params):
-        return self._related_entities(resource_ids, 'deals', Deal,\
-            params=params)
+        return self._related_entities(
+            resource_ids, 'deals', Deal,
+            params=params
+        )
+
+    def bulk_delete(self, organizations):
+        organizations_ids = [organization.id for organization in organizations]
+        response = self._bulk_delete(organizations_ids)
+        return response.json()
 
 
 class DealResource(BaseResource):
@@ -171,16 +187,26 @@ class DealResource(BaseResource):
         return CollectionResponse(self._list(params=params), self.MODEL_CLASS)
 
     def find(self, term, **params):
-        return CollectionResponse(self._find(term, params=params),\
-            self.MODEL_CLASS)
+        return CollectionResponse(
+            self._find(term, params=params),
+            self.MODEL_CLASS
+        )
 
     def list_activities(self, resource_ids, **params):
-        return self._related_entities(resource_ids, 'activities', Activity,\
-            params=params)
+        return self._related_entities(
+            resource_ids, 'activities', Activity,
+            params=params
+        )
 
     def delete(self, deal):
         response = self._delete(deal.id)
         return response.json()
+
+    def bulk_delete(self, deals):
+        deals_ids = [deal.id for deal in deals]
+        response = self._bulk_delete(deals_ids)
+        return response.json()
+
 
 class NoteResource(BaseResource):
     MODEL_CLASS = Note
@@ -202,7 +228,6 @@ class NoteResource(BaseResource):
     def delete(self, activityType):
         response = self._delete(activityType.id)
         return response.json()
-
 
 
 class ActivityResource(BaseResource):
@@ -232,6 +257,13 @@ class ActivityResource(BaseResource):
         response = self._bulk_delete(activities_ids)
         return response.json()
 
+    def update(self, activity):
+        response = self._update(
+            activity.id,
+            data=activity.to_primitive()
+        )
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
 
 class ActivityTypeResource(BaseResource):
     MODEL_CLASS = ActivityType
@@ -257,8 +289,52 @@ class ActivityTypeResource(BaseResource):
     def bulk_delete(self, activityTypes):
         activityTypes_ids = [activityType.id for activityType in activityTypes]
 
-        response = self._bulk_delete(activities_ids)
+        response = self._bulk_delete(activityTypes_ids)
         return response.json()
+
+
+class PersonResource(BaseResource):
+    MODEL_CLASS = Person
+    API_ACESSOR_NAME = 'person'
+    LIST_REQ_PATH = '/persons'
+    DETAIL_REQ_PATH = '/persons/{id}'
+    FIND_REQ_PATH = '/persons/find'
+    RELATED_ENTITIES_PATH = '/persons/{id}/{entity}'
+
+    def detail(self, resource_ids):
+        response = self._detail(resource_ids)
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
+    def create(self, person):
+        response = self._create(data=person.to_primitive())
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
+    def update(self, person):
+        response = self._update(
+            person.id,
+            data=person.to_primitive()
+        )
+        return dict_to_model(response.json()['data'], self.MODEL_CLASS)
+
+    def find(self, term, **params):
+        return CollectionResponse(
+            self._find(term, params=params),
+            self.MODEL_CLASS
+        )
+
+    def list(self, **params):
+        return CollectionResponse(self._list(params=params), self.MODEL_CLASS)
+
+    def delete(self, person):
+        response = self._delete(person.id)
+        return response.json()
+
+    def bulk_delete(self, persons):
+        person_ids = [person.id for person in persons]
+
+        response = self._bulk_delete(person_ids)
+        return response.json()
+
 
 # Registers the resources
 for resource_class in [
@@ -271,5 +347,6 @@ for resource_class in [
     NoteResource,
     ActivityResource,
     ActivityTypeResource,
+    PersonResource,
 ]:
     PipedriveAPI.register_resource(resource_class)
