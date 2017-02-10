@@ -116,6 +116,7 @@ class BaseResource(object):
     DETAIL_REQ_PATH = None
     FIND_REQ_PATH = None
     RELATED_ENTITIES_PATH = None
+    TIMELINE_PATH = None
 
     def __init__(self, api):
         self.api = api
@@ -156,6 +157,9 @@ class BaseResource(object):
         params = params or {}
         params['term'] = term
         return self.send_request('GET', self.FIND_REQ_PATH, params, data)
+
+    def _timeline(self, params=None, data=None):
+        return self.send_request('GET', self.TIMELINE_PATH, params, data)
 
     def _related_entities(self, resource_ids, entity_name, entity_class,
                           params=None, data=None):

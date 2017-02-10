@@ -174,6 +174,7 @@ class DealResource(BaseResource):
     DETAIL_REQ_PATH = '/deals/{id}'
     FIND_REQ_PATH = '/deals/find'
     RELATED_ENTITIES_PATH = '/deals/{id}/{entity}'
+    TIMELINE_PATH = '/deals/timeline'
 
     def detail(self, resource_ids):
         response = self._detail(resource_ids)
@@ -205,6 +206,38 @@ class DealResource(BaseResource):
     def bulk_delete(self, deals):
         deals_ids = [deal.id for deal in deals]
         response = self._bulk_delete(deals_ids)
+        return response.json()
+
+    def timeline(self, start_date, interval, amount, field_key, params=None,
+                 user_id=None, pipeline_id=None, filter_id=None, details=True,
+                 currency='default_currency'):
+        if interval not in ['day', 'week', 'month', 'quarter']:
+            raise ValueError('interval must be day, week, month or quarter')
+        params = params or {}
+        params['start_date'] = start_date  # TODO force it into YYYY-MM-DD
+        params['interval'] = interval
+        params['amount'] = amount
+        # field_key should be in ['add_time', 'update_time',
+        # 'stage_change_time', 'next_activity_date', 'last_activity_date',
+        # 'won_time', 'last_incoming_mail_time', 'last_outgoing_mail_time',
+        # 'lost_time', 'close_time', 'expected_close_date',
+        # 'ff7114bbe24c32abf0e8128c8c1cf8d2da7767de']
+        # Not sure of the best way to enforce this, considering fields could
+        # be updated at any time and it would be slow to check them every
+        # time we want a timeline. Going with "ask forgiveness" strategy
+        params['field_key'] = field_key
+        params['totals_convert_currency'] = currency
+        if details is True:
+            params['exclude_deals'] = 0
+        else:
+            params['exclude_deals'] = 1
+        if user_id is not None:
+            params['user_id'] = user_id
+        if user_id is not None:
+            params['pipeline_id'] = pipeline_id
+        if filter_id is not None:
+            params['filter_id'] = filter_id
+        response = self._timeline(params=params)
         return response.json()
 
 
